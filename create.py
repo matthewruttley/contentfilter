@@ -29,7 +29,7 @@
 # - UNT List
 # - Domain name matching
 
-from json import dump
+from json import dumps
 from pymongo import MongoClient
 
 #Accessing particular data sources
@@ -130,4 +130,5 @@ if __name__ == "__main__":
 	
 	#dump to json file
 	with open('sites.json', 'w') as f:
-		dump(sites, f)
+		sites= dumps(sites, indent=4)
+		f.write(sites)
