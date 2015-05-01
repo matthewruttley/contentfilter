@@ -117,6 +117,20 @@ def get_adult_sites():
 	
 	return sorted(list(domains))
 
+def get_gambling_sites():
+	"""Gets gambling sites"""
+	
+	domains = set()
+	
+	#get domains from the bucketerer database
+	matchers = [
+		'Poker', 'Gambling', 'Blackjack'
+	]
+	dbdomains = category_chunk(c, matchers)
+	domains.update(dbdomains)
+	
+	return sorted(list(domains))
+
 #Main Handler
 if __name__ == "__main__":
 	#Set up database connection
@@ -125,8 +139,9 @@ if __name__ == "__main__":
 	#container
 	sites = {}
 	
-	#get adult sites
+	#get sites from each genre we're concerned about
 	sites['adult'] = get_adult_sites()
+	sites['gambling'] = get_gambling_sites()
 	
 	#dump to json file
 	with open('sites.json', 'w') as f:
