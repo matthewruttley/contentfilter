@@ -131,6 +131,34 @@ def get_gambling_sites():
 	
 	return sorted(list(domains))
 
+def get_drugs_sites():
+	"""Gets drugs sites"""
+	
+	domains = set()
+	
+	#get domains from the bucketerer database
+	matchers = [
+		"Drugs"
+	]
+	dbdomains = category_chunk(c, matchers)
+	domains.update(dbdomains)
+	
+	return sorted(list(domains))
+
+def get_alcohol_sites():
+	"""Gets alcohol related sites"""
+	
+	domains = set()
+	
+	#get domains from the bucketerer database
+	matchers = [
+		"Wine", "Beer", "Liquor"
+	]
+	dbdomains = category_chunk(c, matchers)
+	domains.update(dbdomains)
+	
+	return sorted(list(domains))	
+
 #Main Handler
 if __name__ == "__main__":
 	#Set up database connection
@@ -142,8 +170,14 @@ if __name__ == "__main__":
 	#get sites from each genre we're concerned about
 	sites['adult'] = get_adult_sites()
 	sites['gambling'] = get_gambling_sites()
+	sites['drugs'] = get_drugs_sites()
+	sites['alcohol'] = get_drugs_sites()
 	
 	#dump to json file
 	with open('sites.json', 'w') as f:
 		sites= dumps(sites, indent=4)
 		f.write(sites)
+
+
+
+

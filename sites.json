@@ -1,4 +1,22 @@
 {
+    "drugs": [
+        "azarius.net", 
+        "cannabis.com", 
+        "drugabuse.gov", 
+        "drugpolicy.org", 
+        "drugs-forum.com", 
+        "erowid.org", 
+        "grasscity.com", 
+        "hightimes.com", 
+        "hookah-shisha.com", 
+        "icmag.com", 
+        "mpp.org", 
+        "norml.org", 
+        "rollitup.org", 
+        "sensiseeds.com", 
+        "shroomery.org", 
+        "uk420.com"
+    ], 
     "gambling": [
         "10bet.com", 
         "888.com", 
@@ -659,5 +677,23 @@
         "zizki.com", 
         "zoofiliagratis.xxx", 
         "zpovednice.cz"
+    ], 
+    "alcohol": [
+        "azarius.net", 
+        "cannabis.com", 
+        "drugabuse.gov", 
+        "drugpolicy.org", 
+        "drugs-forum.com", 
+        "erowid.org", 
+        "grasscity.com", 
+        "hightimes.com", 
+        "hookah-shisha.com", 
+        "icmag.com", 
+        "mpp.org", 
+        "norml.org", 
+        "rollitup.org", 
+        "sensiseeds.com", 
+        "shroomery.org", 
+        "uk420.com"
     ]
 }
