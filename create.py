@@ -171,7 +171,7 @@ if __name__ == "__main__":
 	sites['adult'] = get_adult_sites()
 	sites['gambling'] = get_gambling_sites()
 	sites['drugs'] = get_drugs_sites()
-	sites['alcohol'] = get_drugs_sites()
+	sites['alcohol'] = get_alcohol_sites()
 	
 	#dump to json file
 	with open('sites.json', 'w') as f:
