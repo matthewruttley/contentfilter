@@ -50,6 +50,7 @@ def category_chunk(c, chunks, negative=False):
 	requirement = {'domain':1, 'alexa.DMOZ.SITE.CATS.CAT':1}
 	
 	for domain in c['domains'].find(query, requirement):
+		negative_flag = False
 		try:
 			cat_container = domain['alexa']['DMOZ']['SITE']['CATS']['CAT'] #urgh this API
 			if cat_container != {}:
@@ -58,17 +59,20 @@ def category_chunk(c, chunks, negative=False):
 				else:
 					cats = [cat_container['@ID']]
 				
-				for cat in cats:
-					cat = cat.split('/')
-					if negative:
-						#implement negative matching as well for annoying edge cases
+				if negative:
+					for cat in cats: #pretty inefficient but gets the job done
+						cat = set(cat.split('/'))							
 						if negative.intersection(cat):
-							break
-					for chunk in cat:
-						if chunk in chunks:
-							domain_name = domain['domain'].replace('#', '.')
-							domains.append(domain_name)
-							break
+							negative_flag = True
+				
+				if not negative_flag:
+					for cat in cats:
+						cat = cat.split('/')
+						for chunk in cat:
+							if chunk in chunks:
+								domain_name = domain['domain'].replace('#', '.')
+								domains.append(domain_name)
+								break
 		except KeyError:
 			continue
 	
@@ -243,7 +247,9 @@ def get_alcohol_sites():
 		"Wine", "Beer", "Liquor"
 	]
 	
-	negative = set(["DOS and Windows"])
+	
+	negative = ["DOS_and_Windows"]
+	negative = set([unicode(x) for x in negative])
 	
 	dbdomains = category_chunk(c, matchers, negative=negative)
 	domains.update(dbdomains)
