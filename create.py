@@ -235,6 +235,12 @@ def get_drugs_sites():
 					line = line[:-1]
 				domains.update([line])
 	
+	#remove known false positives
+	fps = ["fungi.com"]
+	for x in fps:
+		if x in domains:
+			domains.remove(x)
+	
 	return sorted(list(domains))
 
 def get_alcohol_sites():
