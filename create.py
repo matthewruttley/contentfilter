@@ -30,7 +30,9 @@
 # - Domain name matching
 
 from json import dumps
+
 from pymongo import MongoClient
+from tldextract import extract
 
 #Accessing particular data sources
 
@@ -79,6 +81,44 @@ def check_domain_analysis(category):
 				domains.append(domain)
 	
 	return domains
+
+#Checkers
+
+def check_toulouse_list():
+	"""A university in Toulouse provides a gigantic blacklist: http://dsi.ut-capitole.fr/blacklists/index_en.php.
+	This checks the latest alexa top 1m against it. Requires two files (see first few lines)
+	
+	These are in toulouse_adult.dump. The problem is that many popular sites are false positives e.g. yahoo.com.
+	"""
+	
+	adult_payload_location = "/Users/mruttley/Documents/2015-05-01 Blacklist/contentfilter/adult/"
+	top_1m_location = "/Users/mruttley/Documents/2015-04-22 AdGroups/Bucketerer/data_crunching/ranking_files/2015-05-04top-1m.csv"
+	
+	domains = set()
+	for fn in ['domains']:
+		with open(adult_payload_location + fn) as f:
+			print "importing adult payload"
+			for n, line in enumerate(f):
+				if len(line) > 4: #some weird line ending stuff
+					domain_info = extract(line[:-1])
+					domain_name = domain_info.domain + "." + domain_info.suffix
+					domains.update([domain_name])
+				if n % 10000 == 0:
+					print n
+	
+	print "Checking 1m sites"
+	exists = 0
+	with open(top_1m_location) as f:
+		with open('toulouse_adult.dump', 'w') as g:
+			for n, line in enumerate(f):
+				if len(line) > 4:
+					domain = line.split(',')[1][:-1]
+					if domain in domains:
+						exists += 1
+						g.write(domain + "\n")
+				if n % 10000 == 0:
+					print n, exists
+	print exists
 
 #Handlers for each genre
 
@@ -143,6 +183,11 @@ def get_drugs_sites():
 	dbdomains = category_chunk(c, matchers)
 	domains.update(dbdomains)
 	
+	with open("other_drugs_sites.txt") as f:
+		for line in f:
+			if len(line) > 4:
+				domains.update([line[:-1]])
+	
 	return sorted(list(domains))
 
 def get_alcohol_sites():
@@ -177,6 +222,7 @@ if __name__ == "__main__":
 	with open('sites.json', 'w') as f:
 		sites= dumps(sites, indent=4)
 		f.write(sites)
+
 
 
 
