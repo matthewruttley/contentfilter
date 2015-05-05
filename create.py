@@ -120,6 +120,39 @@ def check_toulouse_list():
 					print n, exists
 	print exists
 
+def check_comscore_list():
+	"""Comscore provides about 2500 top adult sites. Which are in the Alexa top 1m?
+	"""
+	
+	adult_payload_location = "/Users/mruttley/Documents/2015-05-01 Blacklist/contentfilter/"
+	top_1m_location = "/Users/mruttley/Documents/2015-04-22 AdGroups/Bucketerer/data_crunching/ranking_files/2015-05-05top-1m.csv"
+	
+	domains = set()
+	for fn in ['comscore_adult_sites.txt']:
+		with open(adult_payload_location + fn) as f:
+			print "importing adult payload"
+			for n, line in enumerate(f):
+				if len(line) > 4: #some weird line ending stuff
+					if line.endswith('\n'):
+						line = line[:-1]
+					domains.update([line])
+				if n % 10000 == 0:
+					print n
+	
+	print "Checking 1m sites"
+	exists = 0
+	with open(top_1m_location) as f:
+		with open('comscore_adult_top1m.dump', 'w') as g:
+			for n, line in enumerate(f):
+				if len(line) > 4:
+					domain = line.split(',')[1][:-1]
+					if domain in domains:
+						exists += 1
+						g.write(domain + "\n")
+				if n % 10000 == 0:
+					print n, exists
+	print exists
+
 #Handlers for each genre
 
 def get_adult_sites():
@@ -151,6 +184,14 @@ def get_adult_sites():
 		if domain['domain'].endswith('xxx'):
 			domains.update([domain['domain'].replace('#', '.')])
 			stats['tld'] += 1
+	
+	#get comscore sites
+	with open('comscore_adult_top1m.dump') as f:
+		for line in f:
+			if len(line) > 4:
+				if line.endswith('\n'):
+					line = line[:-1]
+				domains.update([line])
 	
 	for k,v in stats.iteritems():
 		print k,v
