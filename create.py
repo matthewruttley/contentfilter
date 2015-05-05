@@ -38,7 +38,7 @@ from tldextract import extract
 
 #Accessing particular data sources
 
-def category_chunk(c, chunks):
+def category_chunk(c, chunks, negative=False):
 	"""Searches for domains by matching specific chunks in their
 	DMOZ categories.
 	Accepts a Connection (c) and an iterable (chunks)
@@ -60,6 +60,10 @@ def category_chunk(c, chunks):
 				
 				for cat in cats:
 					cat = cat.split('/')
+					if negative:
+						#implement negative matching as well for annoying edge cases
+						if negative.intersection(cat):
+							break
 					for chunk in cat:
 						if chunk in chunks:
 							domain_name = domain['domain'].replace('#', '.')
@@ -238,7 +242,10 @@ def get_alcohol_sites():
 	matchers = [
 		"Wine", "Beer", "Liquor"
 	]
-	dbdomains = category_chunk(c, matchers)
+	
+	negative = set(["DOS and Windows"])
+	
+	dbdomains = category_chunk(c, matchers, negative=negative)
 	domains.update(dbdomains)
 	
 	return sorted(list(domains))	
@@ -264,8 +271,3 @@ if __name__ == "__main__":
 	with open('sites.json', 'w') as f:
 		sites= dumps(sites, indent=4)
 		f.write(sites)
-
-
-
-
-
