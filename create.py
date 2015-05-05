@@ -30,6 +30,8 @@
 # - Domain name matching
 
 from json import dumps
+from datetime import datetime
+from os import listdir
 
 from pymongo import MongoClient
 from tldextract import extract
@@ -69,10 +71,10 @@ def category_chunk(c, chunks):
 	return domains
 
 def check_domain_analysis(category):
-	"""Domain Analysis is a large spreadsheet with several classifications on it"""
+	"""Domain Analysis is a large spreadsheet with about 1000 several hand classified domains"""
 	domains = []
 	
-	with open('domain_analysis.tsv') as f:
+	with open('sources/hand_classified/domain_analysis.tsv') as f:
 		for line in f:
 			line = line.split('\t')
 			domain = line[0]
@@ -82,119 +84,113 @@ def check_domain_analysis(category):
 	
 	return domains
 
+def load_alexa():
+	"""Returns a set of all the domains in the latest Alexa top 1m list"""
+	timestamp = datetime.strftime(datetime.now(), '%Y-%m-%d')
+	top_1m_location = "/Users/mruttley/Documents/2015-04-22 AdGroups/Bucketerer/data_crunching/ranking_files/"+timestamp+"top-1m.csv"
+	alexa = set()
+	with open(top_1m_location) as f:
+		for n, line in enumerate(f):
+			if len(line) > 4:
+				if line.endswith('\n'):
+					line = line[:-1]
+				domain = line.lower().split(',')[1]
+				alexa.update([domain])
+	return alexa
+
+def prepare_comscore_lists():
+	"""Cleans and prepares comscore lists. Only returns files that are in the
+	latest Alexa top 1m sites"""
+	
+	#setup
+	directory = 'sources/comscore/'
+	alexa = load_alexa() #import alexa
+	
+	#import each list
+	for filename in listdir(directory):
+		if filename.endswith("dump") == False:
+			print "Working on {0}".format(filename)
+			domains = set()
+			category = filename.split(".")[0] #filenames are in the format: category.txt
+			exists = 0
+			
+			with open(directory + filename) as f:
+				for n, line in enumerate(f):
+					line = line.lower()
+					if len(line) > 4:
+						if line.endswith('\n'):
+							line = line[:-1]
+						if line.endswith("*"):
+							line = line[:-1]
+						if " " not in line:
+							domains.update([line])
+						
+			print "Checking against Alexa"
+			with open(directory + category + '.dump', 'w') as g:
+				for domain in domains:
+					if domain in alexa:
+						exists += 1
+						g.write(domain + "\n")
+			
+			print "Wrote {0} domains to {1}{2}.dump".format(exists, directory, category)
+
 #Checkers
 
 def check_toulouse_list():
 	"""A university in Toulouse provides a gigantic blacklist: http://dsi.ut-capitole.fr/blacklists/index_en.php.
 	This checks the latest alexa top 1m against it. Requires two files (see first few lines)
-	
-	These are in toulouse_adult.dump. The problem is that many popular sites are false positives e.g. yahoo.com.
 	"""
 	
-	adult_payload_location = "/Users/mruttley/Documents/2015-05-01 Blacklist/contentfilter/adult/"
-	top_1m_location = "/Users/mruttley/Documents/2015-04-22 AdGroups/Bucketerer/data_crunching/ranking_files/2015-05-04top-1m.csv"
+	payload_directory = "sources/toulouse/adult/"
+	payload_fn = "domain"
 	
 	domains = set()
-	for fn in ['domains']:
-		with open(adult_payload_location + fn) as f:
-			print "importing adult payload"
-			for n, line in enumerate(f):
-				if len(line) > 4: #some weird line ending stuff
-					domain_info = extract(line[:-1])
-					domain_name = domain_info.domain + "." + domain_info.suffix
-					domains.update([domain_name])
-				if n % 10000 == 0:
-					print n
-	
-	print "Checking 1m sites"
+	alexa = load_alexa()
 	exists = 0
-	with open(top_1m_location) as f:
-		with open('toulouse_adult.dump', 'w') as g:
-			for n, line in enumerate(f):
-				if len(line) > 4:
-					domain = line.split(',')[1][:-1]
-					if domain in domains:
-						exists += 1
-						g.write(domain + "\n")
-				if n % 10000 == 0:
-					print n, exists
-	print exists
-
-def check_comscore_list():
-	"""Comscore provides about 2500 top adult sites. Which are in the Alexa top 1m?
-	"""
 	
-	adult_payload_location = "/Users/mruttley/Documents/2015-05-01 Blacklist/contentfilter/"
-	top_1m_location = "/Users/mruttley/Documents/2015-04-22 AdGroups/Bucketerer/data_crunching/ranking_files/2015-05-05top-1m.csv"
-	
-	domains = set()
-	for fn in ['comscore_adult_sites.txt']:
-		with open(adult_payload_location + fn) as f:
-			print "importing adult payload"
+	with open(payload_directory + payload_fn) as f:
+		with open('toulouse_check.dump', 'w') as g:
+			print "Importing Toulouse payload"
 			for n, line in enumerate(f):
 				if len(line) > 4: #some weird line ending stuff
 					if line.endswith('\n'):
 						line = line[:-1]
-					domains.update([line])
-				if n % 10000 == 0:
-					print n
+					domain_info = extract(line)
+					if domain_info.subdomain == "":
+						domain_name = domain_info.domain + "." + domain_info.suffix
+						if domain_name in alexa:
+							g.write(domain_name + "\n")
+							exists += 1
 	
-	print "Checking 1m sites"
-	exists = 0
-	with open(top_1m_location) as f:
-		with open('comscore_adult_top1m.dump', 'w') as g:
-			for n, line in enumerate(f):
-				if len(line) > 4:
-					domain = line.split(',')[1][:-1]
-					if domain in domains:
-						exists += 1
-						g.write(domain + "\n")
-				if n % 10000 == 0:
-					print n, exists
-	print exists
+	print "{0} found in Alexa. Written to toulouse_check.dump".format()
 
 #Handlers for each genre
 
 def get_adult_sites():
 	"""Gets adult sites from various data sources"""
-	
-	stats = {
-		'bucketerer_cats': 0,
-		'content verification': 0,
-		'domain analysis': 0,
-		'tld': 0,
-		'unt_list': 0,
-		'domain_name_matching': 0
-	}
 
 	domains = set()
 	
 	#Get sites from bucketerer db
 	db_sites = category_chunk(c, ["Adult"])
 	domains.update(db_sites)
-	stats['bucketerer_cats'] += len(db_sites)
 	
 	#get sites from DomainAnalysis
 	domain_analysis = check_domain_analysis('18')
 	domains.update(domain_analysis)
-	stats['domain analysis'] += len(domain_analysis)
 	
 	#get sites by tld
 	for domain in c['domains'].find({}, {'domain':1}):
 		if domain['domain'].endswith('xxx'):
 			domains.update([domain['domain'].replace('#', '.')])
-			stats['tld'] += 1
 	
 	#get comscore sites
-	with open('comscore_adult_top1m.dump') as f:
+	with open('sources/comscore/adult.dump') as f:
 		for line in f:
 			if len(line) > 4:
 				if line.endswith('\n'):
 					line = line[:-1]
 				domains.update([line])
-	
-	for k,v in stats.iteritems():
-		print k,v
 	
 	return sorted(list(domains))
 
@@ -224,10 +220,12 @@ def get_drugs_sites():
 	dbdomains = category_chunk(c, matchers)
 	domains.update(dbdomains)
 	
-	with open("other_drugs_sites.txt") as f:
+	with open("sources/suggested/drugs.txt") as f:
 		for line in f:
 			if len(line) > 4:
-				domains.update([line[:-1]])
+				if line.endswith('\n'):
+					line = line[:-1]
+				domains.update([line])
 	
 	return sorted(list(domains))
 
@@ -253,11 +251,14 @@ if __name__ == "__main__":
 	#container
 	sites = {}
 	
+	#prepare comscore stuff
+	prepare_comscore_lists()
+	
 	#get sites from each genre we're concerned about
-	sites['adult'] = get_adult_sites()
-	sites['gambling'] = get_gambling_sites()
-	sites['drugs'] = get_drugs_sites()
-	sites['alcohol'] = get_alcohol_sites()
+	print "Processing Adult Sites"; sites['adult'] = get_adult_sites()
+	print "Processing Gambling Sites"; sites['gambling'] = get_gambling_sites()
+	print "Processing Drugs Sites"; sites['drugs'] = get_drugs_sites()
+	print "Processing Alcohol Sites"; sites['alcohol'] = get_alcohol_sites()
 	
 	#dump to json file
 	with open('sites.json', 'w') as f:
