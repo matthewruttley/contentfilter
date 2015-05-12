@@ -271,6 +271,8 @@ def create_base64_version(sites):
 		for domain in domains:
 			blacklist.append(b64encode(domain))
 	
+	blacklist.append(b64encode('example.com')) #specific request
+	
 	return {'blacklist': blacklist}
 
 #Main Handler
