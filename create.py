@@ -32,6 +32,7 @@
 from json import dumps
 from datetime import datetime
 from os import listdir
+from base64 import b64encode
 
 from pymongo import MongoClient
 from tldextract import extract
@@ -262,6 +263,16 @@ def get_alcohol_sites():
 	
 	return sorted(list(domains))	
 
+def create_base64_version(sites):
+	"""Creates a base64 version"""
+	
+	blacklist = []
+	for category, domains in sites.iteritems():
+		for domain in domains:
+			blacklist.append(b64encode(domain))
+	
+	return {'blacklist': blacklist}
+
 #Main Handler
 if __name__ == "__main__":
 	#Set up database connection
@@ -279,7 +290,12 @@ if __name__ == "__main__":
 	print "Processing Drugs Sites"; sites['drugs'] = get_drugs_sites()
 	print "Processing Alcohol Sites"; sites['alcohol'] = get_alcohol_sites()
 	
-	#dump to json file
+	#dump b64 encoded version to file
+	with open('sitesb64.json', 'w') as f:
+		b64 = dumps(create_base64_version(sites), indent=4)
+		f.write(b64)
+	
+	#dump plaintext version to json file
 	with open('sites.json', 'w') as f:
 		sites= dumps(sites, indent=4)
 		f.write(sites)
