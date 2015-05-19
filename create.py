@@ -33,6 +33,7 @@ from json import dumps
 from datetime import datetime
 from os import listdir
 from base64 import b64encode
+from md5 import new as md5new
 
 from pymongo import MongoClient
 from tldextract import extract
@@ -275,6 +276,18 @@ def create_base64_version(sites):
 	
 	return {'blacklist': blacklist}
 
+def create_md5_version(sites):
+	"""Creates an md5 version"""
+	
+	blacklist = []
+	for category, domains in sites.iteritems():
+		for domain in domains:
+			blacklist.append(md5new(domain).hexdigest())
+	
+	blacklist.append(md5new('example.com').hexdigest()) #specific request
+	
+	return {'blacklist': blacklist}
+
 #Main Handler
 if __name__ == "__main__":
 	#Set up database connection
@@ -296,6 +309,11 @@ if __name__ == "__main__":
 	with open('sitesb64.json', 'w') as f:
 		b64 = dumps(create_base64_version(sites), indent=4)
 		f.write(b64)
+	
+	#dump md5 encoded version to file
+	with open('md5.json', 'w') as f:
+		md5 = dumps(create_md5_version(sites), indent=4)
+		f.write(md5)
 	
 	#dump plaintext version to json file
 	with open('sites.json', 'w') as f:
