@@ -288,6 +288,18 @@ def create_md5_version(sites):
 	
 	return {'blacklist': blacklist}
 
+def create_md5_b64_version(sites):
+	"""Creates a version with both hashing methods"""
+	
+	blacklist = []
+	for category, domains in sites.iteritems():
+		for domain in domains:
+			blacklist.append(b64encode(md5new(domain).digest()))
+	
+	blacklist.append(b64encode(md5new('example.com').digest())) #specific request
+	
+	return {'blacklist': blacklist}
+
 #Main Handler
 if __name__ == "__main__":
 	#Set up database connection
@@ -314,6 +326,11 @@ if __name__ == "__main__":
 	with open('md5.json', 'w') as f:
 		md5 = dumps(create_md5_version(sites), indent=4)
 		f.write(md5)
+	
+	#dump double encoded version to file
+	with open('md5_b64.json', 'w') as f:
+		both = dumps(create_md5_b64_version(sites), indent=4)
+		f.write(both)
 	
 	#dump plaintext version to json file
 	with open('sites.json', 'w') as f:
