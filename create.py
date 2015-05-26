@@ -274,7 +274,7 @@ def create_base64_version(sites):
 	
 	blacklist.append(b64encode('example.com')) #specific request
 	
-	return {'blacklist': blacklist}
+	return {'domains': blacklist}
 
 def create_md5_version(sites):
 	"""Creates an md5 version"""
@@ -286,7 +286,7 @@ def create_md5_version(sites):
 	
 	blacklist.append(md5new('example.com').hexdigest()) #specific request
 	
-	return {'blacklist': blacklist}
+	return {'domains': blacklist}
 
 def create_md5_b64_version(sites):
 	"""Creates a version with both hashing methods"""
@@ -298,7 +298,7 @@ def create_md5_b64_version(sites):
 	
 	blacklist.append(b64encode(md5new('example.com').digest())) #specific request
 	
-	return {'blacklist': blacklist}
+	return {'domains': blacklist}
 
 #Main Handler
 if __name__ == "__main__":
